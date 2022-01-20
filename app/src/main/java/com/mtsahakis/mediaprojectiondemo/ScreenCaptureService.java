@@ -86,45 +86,54 @@ public class ScreenCaptureService extends Service {
         @Override
         public void onImageAvailable(ImageReader reader) {
 
-            FileOutputStream fos = null;
-            Bitmap bitmap = null;
-            try (Image image = mImageReader.acquireLatestImage()) {
-                if (image != null) {
-                    Image.Plane[] planes = image.getPlanes();
-                    ByteBuffer buffer = planes[0].getBuffer();
-                    int pixelStride = planes[0].getPixelStride();
-                    int rowStride = planes[0].getRowStride();
-                    int rowPadding = rowStride - pixelStride * mWidth;
 
-                    // create bitmap
-                    bitmap = Bitmap.createBitmap(mWidth + rowPadding / pixelStride, mHeight, Bitmap.Config.ARGB_8888);
-                    bitmap.copyPixelsFromBuffer(buffer);
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
 
-                    // write bitmap to a file
-                    fos = new FileOutputStream(mStoreDir + "/myscreen_" + IMAGES_PRODUCED + ".png");
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+                    FileOutputStream fos = null;
+                    Bitmap bitmap = null;
+                    try (Image image = mImageReader.acquireLatestImage()) {
+                        if (image != null) {
+                            Image.Plane[] planes = image.getPlanes();
+                            ByteBuffer buffer = planes[0].getBuffer();
+                            int pixelStride = planes[0].getPixelStride();
+                            int rowStride = planes[0].getRowStride();
+                            int rowPadding = rowStride - pixelStride * mWidth;
 
-                    IMAGES_PRODUCED++;
-                    Log.e(TAG, "captured image: " + IMAGES_PRODUCED);
-                }
+                            // create bitmap
+                            bitmap = Bitmap.createBitmap(mWidth + rowPadding / pixelStride, mHeight, Bitmap.Config.ARGB_8888);
+                            bitmap.copyPixelsFromBuffer(buffer);
 
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                if (fos != null) {
-                    try {
-                        fos.close();
-                    } catch (IOException ioe) {
-                        ioe.printStackTrace();
+                            // write bitmap to a file
+                            fos = new FileOutputStream(mStoreDir + "/myscreen_" + IMAGES_PRODUCED + ".png");
+                            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+
+                            IMAGES_PRODUCED++;
+                            Log.e(TAG, "captured image: " + IMAGES_PRODUCED);
+                        }
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    } finally {
+                        if (fos != null) {
+                            try {
+                                fos.close();
+                            } catch (IOException ioe) {
+                                ioe.printStackTrace();
+                            }
+                        }
+
+                        if (bitmap != null) {
+                            bitmap.recycle();
+                        }
+
                     }
+
+                        }
+                    }, 5000);
                 }
 
-                if (bitmap != null) {
-                    bitmap.recycle();
-                }
-
-            }
-        }
     }
 
     private class OrientationChangeCallback extends OrientationEventListener {
